@@ -9,6 +9,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let builder = builder
         .flag("-std=c11")
         .flag("-DLFS_CONFIG=../lfs_util_sys.h")
+        .flag("-DLFS_YES_TRACE")
         .flag("-DLFS_NO_MALLOC")
         .flag("-DLFS_NO_DEBUG")
         .flag("-DLFS_NO_WARN")
