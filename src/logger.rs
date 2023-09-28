@@ -1,19 +1,17 @@
-#[repr(C)]
-#[expect(unused)]
-#[derive(Clone, Copy)]
-enum LogLevel {
-    Trace = 0,
-    Debug = 1,
-    Warn = 2,
-    Error = 3,
+#[no_mangle]
+unsafe extern "C" fn log_trace(message: *const u8, args: ...) {
+    log::trace!("{:?} {:?}", message, args);
 }
 
-#[expect(unused)]
-unsafe extern "C" fn logger(log_level: LogLevel, message: *const u8, args: ...) {
-    match log_level {
-        LogLevel::Trace => log::trace!("{:?} {:?}", message, args),
-        LogLevel::Debug => log::debug!("{:?} {:?}", message, args),
-        LogLevel::Warn => log::warn!("{:?} {:?}", message, args),
-        LogLevel::Error => log::error!("{:?} {:?}", message, args),
-    }
+#[no_mangle]
+unsafe extern "C" fn log_debug(message: *const u8, args: ...) {
+    log::debug!("{:?} {:?}", message, args);
+}
+#[no_mangle]
+unsafe extern "C" fn log_warn(message: *const u8, args: ...) {
+    log::warn!("{:?} {:?}", message, args);
+}
+#[no_mangle]
+unsafe extern "C" fn log_error(message: *const u8, args: ...) {
+    log::error!("{:?} {:?}", message, args);
 }

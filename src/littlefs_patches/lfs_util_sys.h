@@ -43,7 +43,7 @@ extern "C" {
 // Logging functions
 #ifdef LFS_YES_TRACE
 #define LFS_TRACE_(fmt, ...) \
-    logger(Trace, "%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
+    // logger(Trace, "%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_TRACE(...) LFS_TRACE_(__VA_ARGS__, "")
 #else
 #define LFS_TRACE(...)
@@ -51,7 +51,7 @@ extern "C" {
 
 #ifndef LFS_NO_DEBUG
 #define LFS_DEBUG_(fmt, ...) \
-    logger(Debug, "%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
+    // logger(Debug, "%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_DEBUG(...) LFS_DEBUG_(__VA_ARGS__, "")
 #else
 #define LFS_DEBUG(...)
@@ -59,7 +59,7 @@ extern "C" {
 
 #ifndef LFS_NO_WARN
 #define LFS_WARN_(fmt, ...) \
-    logger(Warn, "%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
+    // logger(Warn, "%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_WARN(...) LFS_WARN_(__VA_ARGS__, "")
 #else
 #define LFS_WARN(...)
@@ -67,20 +67,17 @@ extern "C" {
 
 #ifndef LFS_NO_ERROR
 #define LFS_ERROR_(fmt, ...) \
-    logger(Error, "%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
+    // logger(Error, "%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_ERROR(...) LFS_ERROR_(__VA_ARGS__, "")
 #else
 #define LFS_ERROR(...)
 #endif
 
-enum LogLevel {
-    Trace = 0,
-    Debug = 1,
-    Warn = 2,
-    Error = 3
-};
-
-void logger(enum LogLevel, char *__restrict __fmt, ...);
+// Custom logging functions
+void log_trace(char *__restrict __fmt, ...);
+void log_debug(char *__restrict __fmt, ...);
+void log_warn(char *__restrict __fmt, ...);
+void log_error(char *__restrict __fmt, ...);
 
 // Runtime assertions
 #ifndef LFS_NO_ASSERT
