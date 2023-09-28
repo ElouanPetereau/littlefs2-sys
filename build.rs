@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let target = env::var("TARGET")?;
     let builder = builder
         .flag("-std=c11")
-        .flag("-DLFS_CONFIG=../lfs_util_sys.h")
+        .flag("-DLFS_CONFIG=../src/littlefs_patches/lfs_util_sys.h")
         .flag("-DLFS_YES_TRACE")
         .flag("-DLFS_NO_MALLOC")
         .flag("-DLFS_NO_DEBUG")
@@ -33,7 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .flag("-DLFS_NO_ERROR")
         .file("littlefs/lfs.c")
         .file("littlefs/lfs_util.c")
-        .file("string.c");
+        .file("src/littlefs_patches/string.c");
 
     #[cfg(not(feature = "assertions"))]
     let builder = builder.flag("-DLFS_NO_ASSERT");
@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let bindings = bindgen::Builder::default()
         .header("littlefs/lfs.h")
-        .header("lfs_util_sys.h")
+        .header("src/littlefs_patches/lfs_util_sys.h")
         .clang_arg(format!(
             "-I{}",
             include_path
