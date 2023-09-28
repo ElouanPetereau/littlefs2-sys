@@ -1,9 +1,26 @@
-use std::env;
-use std::path::PathBuf;
+use std::{env, path::PathBuf};
+use which::which;
 
 use bindgen::Formatter;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Find the toolchain include path from the CC environment variable
+    let cc = cc::Build::new().get_compiler();
+    let gcc = cc
+        .path()
+        .to_str()
+        .expect("Should be able to extract the name of the compiler");
+    let gcc_absolute_path =
+        which(gcc).expect("Should be able to find the compiler using the which function");
+    let include_path = gcc_absolute_path
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join(gcc.trim_end_matches("-gcc"))
+        .join("include");
+
+    // Generate the rust FFI bindings
     let mut builder = cc::Build::new();
     let target = env::var("TARGET")?;
     let builder = builder
@@ -28,6 +45,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let bindings = bindgen::Builder::default()
         .header("littlefs/lfs.h")
+        .header("lfs_util_sys.h")
+        .clang_arg(format!(
+            "-I{}",
+            include_path
+                .to_str()
+                .expect("Should be able to extract the include path")
+        ))
         .clang_arg(format!("--target={}", target))
         .use_core()
         .ctypes_prefix("cty")
