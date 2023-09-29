@@ -54,10 +54,9 @@ unsafe extern "C" fn log_msg(log_level: LittleFsLogLevel, message: *const i8, mu
                 log::log!(log_level.into(), "Argument {i}({extracted_type:?}): {arg}");
             }
             ArgType::String => {
-                let arg = CStr::from_ptr(list.arg::<*const u8>() as *const i8)
-                    .to_str()
-                    .expect("Should be able to convert the C string to rust");
-                log::log!(log_level.into(), "Argument {i}({extracted_type:?}): {arg}");
+                if let Ok(arg) = CStr::from_ptr(list.arg::<*const i8>()).to_str() {
+                    log::log!(log_level.into(), "Argument {i}({extracted_type:?}): {arg}");
+                }
             }
             ArgType::Pointer => {
                 let arg = list.arg::<*const usize>();
