@@ -1,5 +1,5 @@
-use core::ffi::CStr;
-use heapless::Vec;
+use core::{ffi::CStr, fmt};
+use heapless::{String, Vec};
 use log::Level;
 
 #[repr(C)]
@@ -28,51 +28,57 @@ unsafe extern "C" fn log_msg(log_level: LittleFsLogLevel, message: *const i8, mu
     let message_cstr = CStr::from_ptr(message)
         .to_str()
         .expect("Should be able to convert the C string to rust");
-    log::log!(log_level.into(), "{}", message_cstr);
 
-    let extracted_types = extract_types::<100>(message_cstr);
+    let mut message_str = String::<500>::new();
+
+    let (extracted_types, extracted_strings) = extract_types::<100, 25>(message_cstr);
     let mut list = args.as_va_list();
     for (i, extracted_type) in extracted_types.iter().enumerate() {
+        let _ = message_str.push_str(extracted_strings[i].as_str()); //FIXME: Check overflow ?
         match extracted_type {
             ArgType::Integer => {
-                let arg = list.arg::<i64>();
-                log::log!(log_level.into(), "Argument {i}({extracted_type:?}): {arg}");
+                let arg = list.arg::<isize>();
+                let _ = fmt::write(&mut message_str, format_args!("{arg}"));
             }
             ArgType::UnsignedInteger => {
-                let arg = list.arg::<u64>();
-                log::log!(log_level.into(), "Argument {i}({extracted_type:?}): {arg}");
+                let arg = list.arg::<usize>();
+                let _ = fmt::write(&mut message_str, format_args!("{arg}"));
             }
             ArgType::UnsignedIntegerHex => {
-                let arg = list.arg::<u64>();
-                log::log!(
-                    log_level.into(),
-                    "Argument {i}({extracted_type:?}): 0x{arg:X}"
-                );
+                let arg = list.arg::<usize>();
+                let _ = fmt::write(&mut message_str, format_args!("0x{arg:X}"));
             }
             ArgType::FloatingPoint => {
                 let arg = list.arg::<f64>();
-                log::log!(log_level.into(), "Argument {i}({extracted_type:?}): {arg}");
+                log::log!(log_level.into(), "{arg}");
             }
             ArgType::String => {
                 if let Ok(arg) = CStr::from_ptr(list.arg::<*const i8>()).to_str() {
-                    log::log!(log_level.into(), "Argument {i}({extracted_type:?}): {arg}");
+                    let _ = fmt::write(&mut message_str, format_args!("{arg}"));
                 }
             }
             ArgType::Pointer => {
                 let arg = list.arg::<*const usize>();
-                log::log!(
-                    log_level.into(),
-                    "Argument {i}({extracted_type:?}): {arg:?}"
-                );
+                let _ = fmt::write(&mut message_str, format_args!("{arg:?}"));
             }
             _ => {
-                log::log!(
-                    log_level.into(),
-                    "Unsupported argument type {i}: {extracted_type:?}"
+                let _ = fmt::write(
+                    &mut message_str,
+                    format_args!("Unsupported argument type: {extracted_type:?}"),
                 );
             }
         };
     }
+
+    // If the extracted string list is bigger than the extracted types list, it means we have a remaining message after the last parameter.
+    // It should always be 1 however.
+    if extracted_strings.len() > extracted_types.len() {
+        if let Some(last) = extracted_strings.last() {
+            let _ = message_str.push_str(last.as_str()); //FIXME: Check overflow ?
+        }
+    }
+
+    log::log!(log_level.into(), "{message_str}");
 }
 
 #[derive(Debug, Clone)]
@@ -132,8 +138,12 @@ pub enum ArgType {
     Unknown,
 }
 
-fn extract_types<const Size: usize>(format_string: &str) -> Vec<ArgType, Size> {
-    let mut types = Vec::<ArgType, Size>::new();
+fn extract_types<const VecSize: usize, const StringSize: usize>(
+    format_string: &str,
+) -> (Vec<ArgType, VecSize>, Vec<String<StringSize>, VecSize>) {
+    let mut types = Vec::<ArgType, VecSize>::new();
+    let mut strings = Vec::<String<StringSize>, VecSize>::new();
+    let mut pre_type_string = String::<StringSize>::new();
 
     let mut chars = DoublePeekIterator::new(format_string.chars());
     while let Some(c) = chars.next() {
@@ -165,12 +175,17 @@ fn extract_types<const Size: usize>(format_string: &str) -> Vec<ArgType, Size> {
                     '%' => ArgType::Literal,
                     _ => ArgType::Unknown,
                 };
-                types
-                    .push(arg_type)
-                    .expect("Should be able to push the argument type in the type list");
+                let _ = types.push(arg_type); //FIXME: Check overflow ?
                 chars.next();
+                let _ = strings.push(pre_type_string); //FIXME: Check overflow ?
+                pre_type_string = String::<StringSize>::new();
             }
+        } else {
+            let _ = pre_type_string.push(c); //FIXME: Check overflow ?
         }
     }
-    types
+    if !pre_type_string.is_empty() {
+        let _ = strings.push(pre_type_string); //FIXME: Check overflow ?
+    }
+    (types, strings)
 }
