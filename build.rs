@@ -34,22 +34,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(not(feature = "assertions"))]
     let builder = builder.flag("-DLFS_NO_ASSERT");
 
-    #[cfg(feature = "trace")]
-    let builder = builder
-        .flag("-DLFS_YES_TRACE")
-        .flag("-DLFS_YES_DEBUG")
-        .flag("-DLFS_YES_WARN")
-        .flag("-DLFS_YES_ERROR");
-
-    #[cfg(feature = "debug")]
-    let builder = builder
-        .flag("-DLFS_YES_DEBUG")
-        .flag("-DLFS_YES_WARN")
-        .flag("-DLFS_YES_ERROR");
-    #[cfg(feature = "warn")]
-    let builder = builder.flag("-DLFS_YES_WARN").flag("-DLFS_YES_ERROR");
-    #[cfg(feature = "error")]
-    let builder = builder.flag("-DLFS_YES_ERROR");
+    #[cfg(feature = "no-log")]
+    let builder = builder.flag("-DLFS_NO_LOG");
 
     builder.compile("lfs-sys");
 
