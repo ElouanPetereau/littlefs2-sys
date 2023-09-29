@@ -43,7 +43,7 @@ extern "C" {
 // Logging functions
 #ifndef LFS_NO_LOG
 #define LFS_TRACE_(fmt, ...) \
-    log_msg(Trace, "%s:%d: " fmt "%s", __FILE__, __LINE__, __VA_ARGS__)
+    log_msg(Trace, "%s:%d - " fmt "%s", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_TRACE(...) LFS_TRACE_(__VA_ARGS__, "")
 #else
 #define LFS_TRACE(...)
@@ -51,7 +51,7 @@ extern "C" {
 
 #ifndef LFS_NO_LOG
 #define LFS_DEBUG_(fmt, ...) \
-    log_msg(Debug, "%s:%d: " fmt "%s", __FILE__, __LINE__, __VA_ARGS__)
+    log_msg(Debug, "%s:%d - " fmt "%s", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_DEBUG(...) LFS_DEBUG_(__VA_ARGS__, "")
 #else
 #define LFS_DEBUG(...)
@@ -59,7 +59,7 @@ extern "C" {
 
 #ifndef LFS_NO_LOG
 #define LFS_WARN_(fmt, ...) \
-    log_msg(Warn, "%s:%d: " fmt "%s", __FILE__, __LINE__, __VA_ARGS__)
+    log_msg(Warn, "%s:%d - " fmt "%s", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_WARN(...) LFS_WARN_(__VA_ARGS__, "")
 #else
 #define LFS_WARN(...)
@@ -67,7 +67,7 @@ extern "C" {
 
 #ifndef LFS_NO_LOG
 #define LFS_ERROR_(fmt, ...) \
-    log_msg(Error, "%s:%d: " fmt "%s", __FILE__, __LINE__, __VA_ARGS__)
+    log_msg(Error, "%s:%d - " fmt "%s", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_ERROR(...) LFS_ERROR_(__VA_ARGS__, "")
 #else
 #define LFS_ERROR(...)
