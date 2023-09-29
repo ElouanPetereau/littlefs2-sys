@@ -26,11 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let builder = builder
         .flag("-std=c11")
         .flag("-DLFS_CONFIG=../src/littlefs_patches/lfs_util_sys.h")
-        .flag("-DLFS_YES_TRACE")
         .flag("-DLFS_NO_MALLOC")
-        .flag("-DLFS_NO_DEBUG")
-        .flag("-DLFS_NO_WARN")
-        .flag("-DLFS_NO_ERROR")
         .file("littlefs/lfs.c")
         .file("littlefs/lfs_util.c")
         .file("src/littlefs_patches/string.c");
@@ -39,7 +35,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let builder = builder.flag("-DLFS_NO_ASSERT");
 
     #[cfg(feature = "trace")]
-    let builder = builder.flag("-DLFS_YES_TRACE");
+    let builder = builder
+        .flag("-DLFS_YES_TRACE")
+        .flag("-DLFS_YES_DEBUG")
+        .flag("-DLFS_YES_WARN")
+        .flag("-DLFS_YES_ERROR");
+
+    #[cfg(feature = "debug")]
+    let builder = builder
+        .flag("-DLFS_YES_DEBUG")
+        .flag("-DLFS_YES_WARN")
+        .flag("-DLFS_YES_ERROR");
+    #[cfg(feature = "warn")]
+    let builder = builder.flag("-DLFS_YES_WARN").flag("-DLFS_YES_ERROR");
+    #[cfg(feature = "error")]
+    let builder = builder.flag("-DLFS_YES_ERROR");
 
     builder.compile("lfs-sys");
 

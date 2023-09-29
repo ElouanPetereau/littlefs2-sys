@@ -43,31 +43,31 @@ extern "C" {
 // Logging functions
 #ifdef LFS_YES_TRACE
 #define LFS_TRACE_(fmt, ...) \
-    // logger(Trace, "%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
+    log_trace("%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_TRACE(...) LFS_TRACE_(__VA_ARGS__, "")
 #else
 #define LFS_TRACE(...)
 #endif
 
-#ifndef LFS_NO_DEBUG
+#ifdef LFS_YES_DEBUG
 #define LFS_DEBUG_(fmt, ...) \
-    // logger(Debug, "%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
+    log_debug("%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_DEBUG(...) LFS_DEBUG_(__VA_ARGS__, "")
 #else
 #define LFS_DEBUG(...)
 #endif
 
-#ifndef LFS_NO_WARN
+#ifdef LFS_YES_WARN
 #define LFS_WARN_(fmt, ...) \
-    // logger(Warn, "%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
+    log_warn("%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_WARN(...) LFS_WARN_(__VA_ARGS__, "")
 #else
 #define LFS_WARN(...)
 #endif
 
-#ifndef LFS_NO_ERROR
+#ifdef LFS_YES_ERROR
 #define LFS_ERROR_(fmt, ...) \
-    // logger(Error, "%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
+    log_error("%s:%d: " fmt "%s\n", __FILE__, __LINE__, __VA_ARGS__)
 #define LFS_ERROR(...) LFS_ERROR_(__VA_ARGS__, "")
 #else
 #define LFS_ERROR(...)
