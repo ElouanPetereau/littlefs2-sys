@@ -31,10 +31,10 @@ unsafe extern "C" fn log_msg(log_level: LittleFsLogLevel, message: *const i8, mu
 
     let mut message_str = String::<500>::new();
 
-    let (extracted_types, extracted_strings) = extract_types::<100, 25>(message_cstr);
+    let (extracted_types, extracted_strings) = extract_types::<50>(message_cstr);
     let mut list = args.as_va_list();
     for (i, extracted_type) in extracted_types.iter().enumerate() {
-        let _ = message_str.push_str(extracted_strings[i].as_str()); //FIXME: Check overflow ?
+        let _ = message_str.push_str(extracted_strings[i]); //FIXME: Check overflow ?
         match extracted_type {
             ArgType::Integer => {
                 let arg = list.arg::<isize>();
@@ -70,11 +70,11 @@ unsafe extern "C" fn log_msg(log_level: LittleFsLogLevel, message: *const i8, mu
         };
     }
 
-    // If the extracted string list is bigger than the extracted types list, it means we have a remaining message after the last parameter.
-    // It should always be 1 however.
+    // If the extracted string list is bigger than the extracted types list, it means we have a remaining string after the last parameter.
+    // Note that there cannot be more than one trailing string.
     if extracted_strings.len() > extracted_types.len() {
         if let Some(last) = extracted_strings.last() {
-            let _ = message_str.push_str(last.as_str()); //FIXME: Check overflow ?
+            let _ = message_str.push_str(last); //FIXME: Check overflow ?
         }
     }
 
@@ -138,54 +138,60 @@ pub enum ArgType {
     Unknown,
 }
 
-fn extract_types<const VecSize: usize, const StringSize: usize>(
+fn extract_types<const VecSize: usize>(
     format_string: &str,
-) -> (Vec<ArgType, VecSize>, Vec<String<StringSize>, VecSize>) {
+) -> (Vec<ArgType, VecSize>, Vec<&str, VecSize>) {
     let mut types = Vec::<ArgType, VecSize>::new();
-    let mut strings = Vec::<String<StringSize>, VecSize>::new();
-    let mut pre_type_string = String::<StringSize>::new();
+    let mut strings = Vec::<&str, VecSize>::new();
 
     let mut chars = DoublePeekIterator::new(format_string.chars());
+    let mut i: usize = 0;
+    let mut start_index: usize = 0;
     while let Some(c) = chars.next() {
+        // Skip the last %s added by the C code: fmt "%s"
         if chars.clone().count() < 2 {
             break;
         }
         if c == '%' {
             if let Some(&next_char) = chars.peek() {
-                let arg_type = match next_char {
+                let (skipped_chars, arg_type) = match next_char {
                     'l' => {
                         if let Some(&next_char) = chars.peek2() {
                             match next_char {
-                                'd' | 'i' => ArgType::Integer,
-                                'u' | 'o' => ArgType::UnsignedInteger,
-                                _ => ArgType::Unknown,
+                                'd' | 'i' => (3, ArgType::Integer),
+                                'u' | 'o' => (3, ArgType::UnsignedInteger),
+                                _ => (3, ArgType::Unknown),
                             }
                         } else {
-                            ArgType::Unknown
+                            (2, ArgType::Unknown)
                         }
                     }
-                    'd' | 'i' => ArgType::Integer,
-                    'u' | 'o' => ArgType::UnsignedInteger,
-                    'x' | 'X' => ArgType::UnsignedIntegerHex,
-                    'f' | 'F' | 'e' | 'E' | 'g' | 'G' | 'a' | 'A' => ArgType::FloatingPoint,
-                    'c' => ArgType::Character,
-                    's' => ArgType::String,
-                    'p' => ArgType::Pointer,
-                    'n' => ArgType::WriteBytes,
-                    '%' => ArgType::Literal,
-                    _ => ArgType::Unknown,
+                    'd' | 'i' => (2, ArgType::Integer),
+                    'u' | 'o' => (2, ArgType::UnsignedInteger),
+                    'x' | 'X' => (2, ArgType::UnsignedIntegerHex),
+                    'f' | 'F' | 'e' | 'E' | 'g' | 'G' | 'a' | 'A' => (2, ArgType::FloatingPoint),
+                    'c' => (2, ArgType::Character),
+                    's' => (2, ArgType::String),
+                    'p' => (2, ArgType::Pointer),
+                    'n' => (2, ArgType::WriteBytes),
+                    '%' => (2, ArgType::Literal),
+                    _ => (2, ArgType::Unknown),
                 };
                 let _ = types.push(arg_type); //FIXME: Check overflow ?
-                chars.next();
-                let _ = strings.push(pre_type_string); //FIXME: Check overflow ?
-                pre_type_string = String::<StringSize>::new();
+                let _ = strings.push(&format_string[start_index..i]); //FIXME: Check overflow ?
+                i += skipped_chars;
+                start_index = i;
+                for _i in 0..skipped_chars {
+                    chars.next();
+                }
             }
-        } else {
-            let _ = pre_type_string.push(c); //FIXME: Check overflow ?
         }
+        i += 1;
     }
-    if !pre_type_string.is_empty() {
-        let _ = strings.push(pre_type_string); //FIXME: Check overflow ?
+    // Push the additional characters except the last %s
+    if start_index < format_string.len() - 2 {
+        //FIXME: Check overflow ?
+        let _ = strings.push(&format_string[start_index..(format_string.len() - 2)]);
     }
     (types, strings)
 }
