@@ -23,5 +23,7 @@ cc = "1"
 which = "4.0"
 
 [features]
+default = ["no-log"]
 assertions = []
-trace = []
+# Since the transfer of littleFs logs to the log crate use a bunch of unsafe code, this allow to disable all littleFS C side loggings and there transfer
+no-log = []

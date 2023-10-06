@@ -4,6 +4,7 @@
 #![feature(c_variadic)]
 #![feature(lint_reasons)]
 
+#[cfg(not(feature = "no-log"))]
 mod logger;
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
